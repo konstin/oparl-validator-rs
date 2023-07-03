@@ -1,1 +1,0 @@
-./oparl-validator-rs all --report "/var/www/validator/reports/$(date --iso-8601)/" --log "/var/www/validator/logs/$(date --iso-8601)/" --quiet
