@@ -9,7 +9,7 @@ You can download binaries for windows, mac and linux at https://konstin.github.i
 To build from source, [install rust](https://rustup.rs/) and run
 
 ```shell
-cargo install https://github.com/konstin/oparl-validator-rs
+cargo install --git https://github.com/konstin/oparl-validator-rs
 ```
 
 ## Usage
