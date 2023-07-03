@@ -59,6 +59,8 @@ jobs:
     name: Collect and upload
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Prepare tag
         id: prepare_tag
