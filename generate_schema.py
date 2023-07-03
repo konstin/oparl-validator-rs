@@ -53,7 +53,7 @@ def add_field(fp: typing.TextIO, description: Dict[str, Any]) -> str:
                 return f"String"
         case "array":
             # Hack to not loose ref
-            inner_description = {**description, **description['items']}
+            inner_description = {**description, **description["items"]}
             return f"Vec<{add_field(fp, inner_description)}>"
         case "boolean":
             return "bool"
@@ -64,7 +64,7 @@ def add_field(fp: typing.TextIO, description: Dict[str, Any]) -> str:
                 add_struct(fp, description)
                 return title
             elif ref := description.get("$ref"):
-                return ref.split('.')[0]
+                return ref.split(".")[0]
             else:
                 return "HashMap<String, Value>"
         case _:
@@ -92,7 +92,9 @@ def write_struct(
     fp.write("\n")
     fp.write("    fn visit_fields(&self, reporter: &impl Reporter, url: &str) {\n")
     for key, snake_case_key, _ in rust_fields:
-        fp.write(f'        self.visit_field(reporter, "{key}", &self.{snake_case_key}, &url);\n')
+        fp.write(
+            f'        self.visit_field(reporter, "{key}", &self.{snake_case_key}, &url);\n'
+        )
     fp.write("    }\n")
     fp.write("\n")
     fp.write("    fn get_required(&self) -> Vec<&str> {\n")
