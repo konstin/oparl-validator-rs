@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      matrix:
+        platform:
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-musl }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc }
+          - { os: macos-latest, target: x86_64-apple-darwin }
+          - { os: macos-latest, target: aarch64-apple-darwin }
+    steps:
+      - uses: actions/checkout@v2
+      - run: rustup target add ${{ matrix.platform.target }}
+      - name: Setup Xcode env
+        if: matrix.platform.os == 'macos-latest'
+        shell: bash
+        run: |
+          echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> "${GITHUB_ENV}"
+          echo "MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx11.0 --show-sdk-platform-version)" >> "${GITHUB_ENV}"
+      - name: Install musl-tools and libssl-dev
+        if: matrix.platform.os == 'ubuntu-latest'
+        run: sudo apt-get install -y musl-tools
+      - uses: Swatinem/rust-cache@v2
+      # Use the vendored version because musl counts as cross compiling
+      - run: cargo build --release --features reqwest/native-tls-vendored --target ${{ matrix.platform.target }} --bin oparl-validator-rs
+        env:
+          RUSTFLAGS: "-C link-arg=-s"
+
+      - name: Archive binary (windows)
+        if: matrix.platform.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          7z a ../../../${{ github.event.repository.name }}-${{ matrix.platform.target }}.zip ${{ github.event.repository.name }}.exe
+          cd -
+      - name: Archive binary (linux and macOS)
+        if: matrix.platform.os != 'windows-latest'
+        run: |
+          cd target/${{ matrix.platform.target }}/release
+          tar czvf ../../../${{ github.event.repository.name }}-${{ matrix.platform.target }}.tar.gz ${{ github.event.repository.name }}
+          cd -
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: oparl-validator-rs-${{ matrix.platform.target }}
+          path: |
+            ${{ github.event.repository.name }}-${{ matrix.platform.target }}.zip
+            ${{ github.event.repository.name }}-${{ matrix.platform.target }}.tar.gz
+          if-no-files-found: error
+
+  collect-and-upload:
+    name: Collect and upload
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prepare tag
+        id: prepare_tag
+        run: |
+          TAG_NAME="${GITHUB_REF##*/}"
+          echo "::set-output name=tag_name::${TAG_NAME}"
+      # Download all artifacts into one folder per artifact
+      - uses: actions/download-artifact@v3
+      # Move the archives into one flat folder
+      - run: mkdir archives && cp */* archives
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: archives
+          destination_dir: ${{ steps.prepare_tag.outputs.tag_name }}
+          # force_orphan: true

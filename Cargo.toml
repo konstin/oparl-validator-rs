@@ -1,0 +1,35 @@
+[package]
+name = "oparl-validator-rs"
+version = "0.1.2"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+anyhow = "1.0.71"
+clap = { version = "4.3.10", features = ["derive"] }
+console_error_panic_hook = "0.1.7"
+fs-err = "2.9.0"
+futures = "0.3.28"
+indicatif = "0.17.5"
+js-sys = "0.3.64"
+parking_lot = "0.12.1"
+rayon = "1.7.0"
+reqwest = { version = "0.11.18", default-features = false, features = ["blocking", "json", "gzip", "brotli", "deflate", "native-tls"] }
+serde = { version = "1.0.164", features = ["derive"] }
+serde-wasm-bindgen = "0.5.0"
+serde_derive = "1.0.164"
+serde_json = "1.0.99"
+serde_yaml = "0.9.22"
+slug = "0.1.4"
+wasm-bindgen = { version = "0.2.87", features = ["serde-serialize"] }
+wasm-bindgen-futures = "0.4.37"
+web-sys = { version = "0.3.64", features = ["console", "Document", "DomException", "DomTokenList", "Element", "HtmlElement", "Node", "Storage", "Window", "MessageChannel", "MessagePort"] }
+
+[dev-dependencies]
+tar = "0.4.38"
+zstd = "0.12.3"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio = { version = "1.29.1", features = ["macros", "rt", "rt-multi-thread"] }
